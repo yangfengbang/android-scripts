@@ -1,0 +1,51 @@
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'maven-publish'
+
+artifactoryPublish.skip = true
+
+def groupId = project.PUBLISH_GROUP_ID
+def artifactId = project.PUBLISH_ARTIFACT_ID
+def version = project.PUBLISH_VERSION
+
+artifactoryPublish.dependsOn('build')
+publishing {
+    publications {
+        aar(MavenPublication) {
+            groupId = groupId
+            artifactId = artifactId
+            version = version
+
+            artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+            
+            pom.withXml {
+                def dependenciesNode = asNode().appendNode('dependencies')
+                configurations.implementation.allDependencies.each {
+                    if (it.name != 'unspecified') {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', groupId)
+                        dependencyNode.appendNode('artifactId', artifactId)
+                        dependencyNode.appendNode('version', version)
+                    }
+                }
+            }
+        }
+    }
+
+    artifactoryPublish() {
+        publications(publishing.publications.aar)
+    }
+}
+
+artifactory {
+    clientConfig.setIncludeEnvVars(true)
+    clientConfig.info.addEnvironmentProperty('test.adding.dynVar', new Date().toString())
+
+    contextUrl = System.getenv('ARTIFACTORY_CONTEX_URL')
+    publish {
+        repository {
+            repoKey = System.getenv('ARTIFACTORY_REPO_KEY')
+            username = System.getenv('ARTIFACTORY_USERNAME')
+            password = System.getenv('ARTIFACTORY_PASSWORD')
+        }
+    }
+}
