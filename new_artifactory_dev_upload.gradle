@@ -3,17 +3,13 @@ apply plugin: 'maven-publish'
 
 artifactoryPublish.skip = true
 
-def groupId = project.PUBLISH_GROUP_ID
-def artifactId = project.PUBLISH_ARTIFACT_ID
-def version = project.PUBLISH_VERSION
-
 artifactoryPublish.dependsOn('build')
 publishing {
     publications {
         aar(MavenPublication) {
-            groupId = groupId
-            artifactId = artifactId
-            version = version
+            groupId = PUBLISH_GROUP_ID
+            artifactId = PUBLISH_ARTIFACT_ID
+            version = PUBLISH_YUMIAD_VERSION
 
             artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
             
@@ -22,9 +18,9 @@ publishing {
                 configurations.implementation.allDependencies.each {
                     if (it.name != 'unspecified') {
                         def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', groupId)
+                        dependencyNode.appendNode('groupId', it.group)
                         dependencyNode.appendNode('artifactId', artifactId)
-                        dependencyNode.appendNode('version', version)
+                        dependencyNode.appendNode('version', it.version)
                     }
                 }
             }
